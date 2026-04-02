@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Švihej — Průzkum trhů 2026</title>
+<style>
+  :root {
+    --navy: #00275B;
+    --red: #e92424;
+    --yellow: #ffdf4f;
+    --dark: #040d1a;
+    --bg: #0a0a0a;
+    --card: #0d1a2e;
+    --card2: #101e30;
+    --text: #ffffff;
+    --muted: #8899aa;
+    --correct: #ffdf4f;
+    --wrong: rgba(233,36,36,0.4);
+    --jp-accent: #ff6b9d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter','Segoe UI',sans-serif;background:var(--dark);color:var(--text);line-height:1.6;}
+
+  /* PIN */
+  #pin-overlay{position:fixed;inset:0;z-index:999;background:rgba(4,13,26,0.97);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:24px;}
+  #pin-overlay h2{font-size:1.4rem;font-weight:800;color:var(--yellow);}
+  #pin-overlay p{color:var(--muted);font-size:0.9rem;max-width:320px;}
+  #pin-input{padding:14px 24px;font-size:1.4rem;font-weight:800;letter-spacing:0.3em;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:var(--card2);color:var(--text);text-align:center;width:180px;outline:none;transition:border-color 0.2s;}
+  #pin-input:focus{border-color:var(--yellow);}
+  #pin-input.error{border-color:var(--red);animation:shake 0.3s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  #pin-submit{padding:12px 32px;border-radius:10px;border:none;background:var(--yellow);color:var(--navy);font-size:0.95rem;font-weight:800;cursor:pointer;transition:all 0.2s;}
+  #pin-submit:hover{filter:brightness(1.1);transform:translateY(-2px);}
+  #pin-skip{color:var(--muted);font-size:0.82rem;cursor:pointer;text-decoration:underline;opacity:0.6;}
+  #pin-skip:hover{opacity:1;}
+
+  /* FAC BADGE */
+  #fac-badge{display:none;position:fixed;bottom:20px;right:20px;z-index:200;background:var(--yellow);color:var(--navy);padding:8px 16px;border-radius:100px;font-size:0.8rem;font-weight:800;letter-spacing:0.05em;}
+
+  /* TOP BAR */
+  .score-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;}
+  .score-brand{font-weight:900;color:var(--yellow);letter-spacing:0.12em;font-size:1rem;}
+  .score-center{color:var(--muted);font-size:0.8rem;}
+  .score-val{font-weight:800;font-size:1.1rem;color:var(--yellow);}
+  .score-progress{height:3px;background:rgba(255,255,255,0.08);position:relative;overflow:hidden;}
+  .score-progress-fill{height:100%;background:var(--yellow);width:0%;transition:width 0.5s ease;}
+
+  /* HERO */
+  .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;background:radial-gradient(ellipse at 50% 0%,rgba(233,36,36,0.12) 0%,transparent 65%);}
+  .hero-logo{font-size:2.8rem;font-weight:900;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;line-height:1;}
+  .hero-sub-label{font-size:0.85rem;color:var(--muted);margin-bottom:32px;letter-spacing:0.05em;}
+  .hero h1{font-size:clamp(1.8rem,5vw,3.8rem);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-0.02em;}
+  .hero h1 span{color:var(--red);}
+  .hero-desc{font-size:1.05rem;color:var(--muted);margin-bottom:48px;max-width:480px;}
+  .market-pills{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:56px;}
+  .pill{padding:10px 24px;border-radius:100px;font-weight:700;font-size:0.9rem;letter-spacing:0.04em;border:2px solid transparent;background:rgba(255,255,255,0.04);}
+  .pill-cz{border-color:rgba(233,36,36,0.5);color:var(--red);}
+  .pill-sk{border-color:rgba(255,223,79,0.5);color:var(--yellow);}
+  .pill-jp{border-color:rgba(255,107,157,0.5);color:var(--jp-accent);}
+  .scroll-hint{color:var(--muted);font-size:0.85rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+  /* SECTION */
+  .section{max-width:880px;margin:0 auto;padding:80px 24px;}
+  .market-header{display:flex;align-items:center;gap:16px;margin-bottom:40px;}
+  .market-flag{font-size:3rem;line-height:1;}
+  .market-title h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-0.02em;}
+  .market-title p{color:var(--muted);font-size:0.88rem;margin-top:4px;}
+  .market-divider{height:2px;margin-bottom:48px;border-radius:2px;}
+  .section-sep{border:none;height:1px;background:rgba(255,255,255,0.04);}
+
+  /* QUIZ CARD */
+  .quiz-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:32px;margin-bottom:28px;transition:all 0.4s;}
+  .quiz-card.locked{opacity:0.3;pointer-events:none;filter:blur(2px);transform:translateY(8px);}
+  .quiz-card.revealed{border-color:rgba(255,223,79,0.15);}
+  .quiz-label{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:12px;}
+  .quiz-question{font-size:1.15rem;font-weight:600;margin-bottom:24px;line-height:1.45;}
+
+  /* STANDARD OPTIONS (SK/JP) */
+  .quiz-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
+  .quiz-btn{padding:12px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:var(--card2);color:var(--text);font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .quiz-btn:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow);transform:translateY(-2px);}
+  .quiz-btn:disabled{cursor:default;}
+  .quiz-btn.selected{border-color:var(--yellow);color:var(--yellow);background:rgba(255,223,79,0.08);}
+  .quiz-btn.correct{background:rgba(255,223,79,0.15);border-color:var(--correct);color:var(--correct);}
+  .quiz-btn.wrong{background:var(--wrong);border-color:rgba(233,36,36,0.3);color:var(--red);opacity:0.6;}
+  .quiz-btn.highlight{background:rgba(255,223,79,0.1);border-color:rgba(255,223,79,0.4);color:var(--correct);}
+
+  /* ANKETA OPTIONS (CZ) */
+  .anketa-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+  .anketa-btn{padding:12px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:var(--card2);color:var(--text);font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .anketa-btn:hover:not(:disabled){border-color:var(--red);color:var(--red);transform:translateY(-2px);}
+  .anketa-btn:disabled{cursor:default;}
+  .anketa-btn.voted{border-color:var(--red);color:var(--red);background:rgba(233,36,36,0.1);}
+  /* After reveal */
+  .anketa-btn.show-result{position:relative;overflow:hidden;border-color:rgba(255,255,255,0.12);color:var(--text);}
+  .anketa-btn.show-result .btn-bar{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,0.07);border-radius:8px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);z-index:0;}
+  .anketa-btn.show-result .btn-label{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .anketa-btn.show-result .btn-pct{font-size:0.8rem;font-weight:800;}
+  /* Correct answer = yellow */
+  .anketa-btn.show-result.top-answer{border-color:var(--yellow);color:var(--yellow);}
+  .anketa-btn.show-result.top-answer .btn-bar{background:rgba(255,223,79,0.18);}
+  .anketa-btn.show-result.top-answer .btn-pct{color:var(--yellow);}
+  /* Was voted (wrong) = red tint */
+  .anketa-btn.show-result.was-voted:not(.top-answer){border-color:rgba(233,36,36,0.4);background:rgba(233,36,36,0.08);}
+  .anketa-btn.show-result.was-voted:not(.top-answer) .btn-bar{background:rgba(233,36,36,0.15);}
+
+  /* WAITING */
+  .waiting-msg{margin-top:20px;padding:14px 20px;background:rgba(255,223,79,0.04);border:1px dashed rgba(255,223,79,0.25);border-radius:10px;color:var(--muted);font-size:0.9rem;display:none;align-items:center;gap:10px;}
+  .waiting-msg.show{display:flex;animation:fadeIn 0.3s ease;}
+  .waiting-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);animation:pulse 1.2s infinite;flex-shrink:0;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+
+  /* REVEAL PANEL */
+  .reveal-panel{margin-top:24px;padding:24px;background:rgba(255,223,79,0.04);border-left:3px solid var(--yellow);border-radius:0 10px 10px 0;display:none;}
+  .reveal-panel.show{display:block;animation:fadeIn 0.4s ease;}
+  .reveal-number{font-size:3rem;font-weight:900;color:var(--yellow);line-height:1;margin-bottom:10px;}
+  .reveal-text{color:var(--muted);font-size:0.92rem;line-height:1.55;}
+
+  /* DETAIL TOGGLE */
+  .detail-toggle{margin-top:14px;background:none;border:1px solid rgba(255,255,255,0.12);color:var(--muted);padding:8px 16px;border-radius:8px;font-size:0.82rem;cursor:pointer;transition:all 0.2s;display:none;}
+  .detail-toggle:hover{border-color:var(--yellow);color:var(--yellow);}
+  .detail-toggle.show{display:inline-block;}
+  .detail-block{display:none;margin-top:14px;padding:18px;background:rgba(255,255,255,0.025);border-radius:10px;border:1px solid rgba(255,255,255,0.06);}
+  .detail-block.show{display:block;animation:fadeIn 0.4s ease;}
+  .detail-section-title{font-size:0.75rem;color:var(--muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;}
+  .mini-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .mini-bar-label{font-size:0.78rem;color:var(--muted);width:160px;flex-shrink:0;text-align:right;}
+  .mini-bar-track{flex:1;background:rgba(255,255,255,0.05);border-radius:100px;height:18px;overflow:hidden;}
+  .mini-bar-fill{height:100%;border-radius:100px;display:flex;align-items:center;padding-left:8px;font-size:0.72rem;font-weight:700;color:white;width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);}
+  .bar-fill-cz{background:linear-gradient(90deg,#e92424,#ff6b6b);}
+  .bar-fill-sk{background:linear-gradient(90deg,#c9a800,#ffdf4f);}
+  .bar-fill-jp{background:linear-gradient(90deg,#d63384,#ff6b9d);}
+  .bar-fill-neutral{background:linear-gradient(90deg,#334466,#556688);}
+
+  /* DISCUSSION BOX */
+  .discussion-box{display:none;margin-top:20px;padding:20px 24px;background:rgba(255,223,79,0.06);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;}
+  .discussion-box.show{display:block;animation:fadeIn 0.5s ease;}
+  .discussion-label{font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:var(--yellow);margin-bottom:10px;}
+  .discussion-q{font-size:0.97rem;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* FAC REVEAL BUTTON */
+  .fac-reveal-btn{display:none;margin-top:16px;padding:12px 28px;border-radius:10px;border:none;background:var(--yellow);color:var(--navy);font-size:0.95rem;font-weight:800;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(255,223,79,0.25);}
+  .fac-reveal-btn:hover{filter:brightness(1.08);transform:translateY(-2px);}
+  .fac-reveal-btn.visible{display:inline-block;animation:fadeIn 0.3s ease;}
+
+  /* NEXT BTN */
+  .next-btn{display:none;margin-top:12px;margin-left:8px;padding:12px 28px;border-radius:10px;border:2px solid rgba(255,255,255,0.15);background:transparent;color:var(--text);font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .next-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+  .next-btn.show{display:inline-block;animation:fadeIn 0.3s ease;}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .unlockable{display:none;}
+  .unlockable.show{display:block;animation:fadeIn 0.5s ease;}
+
+  /* STAT CARDS */
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin:36px 0;}
+  .stat-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:22px;text-align:center;}
+  .stat-num{font-size:2.6rem;font-weight:900;line-height:1;margin-bottom:6px;}
+  .stat-desc{color:var(--muted);font-size:0.84rem;line-height:1.4;}
+
+  /* BAR CHART */
+  .bar-chart{margin:20px 0;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .bar-label{font-size:0.82rem;color:var(--muted);width:190px;flex-shrink:0;text-align:right;}
+  .bar-track{flex:1;background:rgba(255,255,255,0.05);border-radius:100px;height:22px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:100px;display:flex;align-items:center;padding-left:10px;font-size:0.76rem;font-weight:700;color:white;width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);}
+
+  /* TABLE */
+  .compare-table{width:100%;border-collapse:collapse;margin:28px 0;font-size:0.9rem;}
+  .compare-table th{padding:12px 14px;text-align:center;font-weight:700;border-bottom:2px solid rgba(255,255,255,0.08);font-size:0.78rem;letter-spacing:0.06em;color:var(--muted);text-transform:uppercase;}
+  .compare-table th:first-child{text-align:left;}
+  .compare-table td{padding:12px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .compare-table td:first-child{text-align:left;color:var(--muted);font-size:0.85rem;}
+  .compare-table tr:hover td{background:rgba(255,255,255,0.02);}
+  .td-cz{color:var(--red);font-weight:700;}
+  .td-sk{color:var(--yellow);font-weight:700;}
+
+  /* INSIGHT BOX */
+  .insight-box{background:rgba(255,223,79,0.04);border:1px solid rgba(255,223,79,0.2);border-radius:14px;padding:28px 30px;margin:36px 0;}
+  .insight-box h3{font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);font-weight:700;margin-bottom:12px;}
+  .insight-box p{font-size:0.98rem;line-height:1.65;}
+  .insight-box strong{color:var(--yellow);}
+
+  /* JP INSIGHT */
+  .insight-box-jp{background:rgba(255,107,157,0.05);border:1px solid rgba(255,107,157,0.2);border-radius:14px;padding:28px 30px;margin:36px 0;}
+  .insight-box-jp h3{font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--jp-accent);font-weight:700;margin-bottom:12px;}
+  .insight-box-jp p{font-size:0.98rem;line-height:1.65;}
+  .insight-box-jp strong{color:var(--jp-accent);}
+
+  /* FINAL */
+  .final-section{max-width:880px;margin:0 auto;padding:80px 24px 120px;text-align:center;}
+  .final-score-display{font-size:clamp(4rem,12vw,7rem);font-weight:900;color:var(--yellow);line-height:1;margin:24px 0;}
+  .final-message{font-size:1.15rem;color:var(--muted);margin-bottom:48px;line-height:1.6;}
+  .action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;text-align:left;margin-top:40px;}
+  .action-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px;}
+  .action-market{font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;}
+  .action-card h4{font-size:0.95rem;margin-bottom:8px;line-height:1.4;}
+  .action-card p{font-size:0.82rem;color:var(--muted);line-height:1.5;}
+
+  /* JP quote cards */
+  .jp-quote-card{background:rgba(255,107,157,0.06);border-left:3px solid var(--jp-accent);padding:12px 16px;border-radius:0 10px 10px 0;margin-bottom:10px;}
+  .jp-quote-card strong{color:var(--jp-accent);}
+
+  /* Market nav hint */
+  .market-nav-hint{text-align:center;padding:24px;color:var(--muted);font-size:0.88rem;}
+  .market-nav-hint a{color:var(--yellow);text-decoration:none;font-weight:700;}
+  .market-nav-hint a:hover{text-decoration:underline;}
+
+  @media(max-width:600px){
+    .bar-label,.mini-bar-label{width:100px;font-size:0.72rem;}
+    .compare-table{font-size:0.78rem;}
+    .compare-table th,.compare-table td{padding:9px 8px;}
+    .quiz-question{font-size:1rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- PIN OVERLAY -->
+<div id="pin-overlay">
+  <div style="font-size:2.5rem;">🔐</div>
+  <h2>Facilitátorský mód</h2>
+  <p>Zadej PIN pro přístup k reveal tlačítkům a řízení průzkumu. Nebo pokračuj jako divák.</p>
+  <input type="password" id="pin-input" maxlength="6" placeholder="••••" autocomplete="off"/>
+  <button id="pin-submit" onclick="checkPin()">Odemknout</button>
+  <span id="pin-skip" onclick="closePinOverlay(false)">Pokračovat bez PINu (mód divák)</span>
+  <span id="pin-preview" onclick="activatePreview()" style="color:var(--yellow);font-size:0.85rem;cursor:pointer;text-decoration:underline;opacity:0.85;margin-top:4px;">👁 Preview mód — zobrazit vše najednou</span>
+</div>
+
+<div id="fac-badge">🎙 FACILITÁTOR</div>
+<div id="preview-badge" style="display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--yellow);color:#00275B;padding:5px 18px;border-radius:20px;font-size:0.75rem;font-weight:800;letter-spacing:0.1em;z-index:100;">👁 PREVIEW MÓD</div>
+
+<!-- TOP BAR -->
+<div>
+  <div class="score-bar">
+    <div class="score-brand">ŠVIHEJ</div>
+    <div class="score-center">Market Briefing 2026</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="color:var(--muted);">Skóre:</span>
+      <span class="score-val" id="score-display">0</span>
+      <span style="color:var(--muted);">/ <span id="max-display">27</span></span>
+    </div>
+  </div>
+  <div class="score-progress"><div class="score-progress-fill" id="score-progress-fill"></div></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-logo">ŠVIHEJ</div>
+  <div class="hero-sub-label">Průzkum trhů 2026</div>
+  <h1>Co víš o<br><span>našich trzích?</span></h1>
+  <p class="hero-desc">3 trhy. 27 otázek. Reálná data. Tipuj a zjisti, jak dobře znáš naše příležitosti.</p>
+  <div class="market-pills">
+    <div class="pill pill-cz">🇨🇿 Česko · 204 respondentů · 20 otázek</div>
+    <div class="pill pill-sk">🇸🇰 Slovensko · 202 respondentů · 3 otázky</div>
+    <div class="pill pill-jp">🇯🇵 Japonsko · 113 respondentů · 4 otázky</div>
+  </div>
+  <a href="#cz" class="scroll-hint">
+    <span>Začít průzkum</span>
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </a>
+</div>
+
+<!-- ═══════════════════════════ ČESKO ═══════════════════════════ -->
+<hr class="section-sep" id="cz">
+<div class="section">
+  <div class="market-header">
+    <div class="market-flag">🇨🇿</div>
+    <div class="market-title">
+      <h2 style="color:var(--yellow);">Česká republika</h2>
+      <p>Únor 2026 · 204 respondentů · online, reprezentativní vzorek</p>
+    </div>
+  </div>
+  <div class="market-divider" style="background:linear-gradient(to right,var(--red),transparent);"></div>
+
+  <!-- CZ Q1 — Jak často sportují -->
+  <div class="quiz-card" id="qcz1">
+    <div class="quiz-label">Otázka 1 / 20 — Jak často sportují</div>
+    <div class="quiz-question">Kolik % Čechů říká, že jsou aktivní a docela často se hýbou?</div>
+    <div class="anketa-options" id="qcz1-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz1',this)">28 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz1',this)">38 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz1',this)">47 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz1',this)">61 %</button>
+    </div>
+    <div class="waiting-msg" id="qcz1-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz1-fac" onclick="anketaReveal('qcz1','47 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz1-reveal">
+      <div class="reveal-number">47 %</div>
+      <div class="reveal-text">47 % říká, že jsou aktivní a docela často se hýbou. 32 % občas, 10 % sportovci každý den. Jen 12 % se skoro vůbec nehýbe.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz1-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz1-detail">
+        <div class="detail-section-title">Jak aktivní jsou Češi</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Aktivní a často</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="47%">47 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Občas</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="32%">32 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Sportovec každý den</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Skoro vůbec / začátky</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="12%">12 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz1-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Náš zákazník je aktivní — ale rekreačně (93 %). Jak mluvit s někým, kdo se hýbe, ale švihadlo nikdy nezkoušel?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q2 — Motivace ke cvičení (celkově) -->
+  
+<div class="quiz-card locked" id="qcz2">
+    <div class="quiz-label">Otázka 2 / 20 — Jaké sporty dělají</div>
+    <div class="quiz-question">Který sport dělají Češi nejčastěji spontánně?</div>
+    <div class="anketa-options" id="qcz2-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz2',this)">Cyklistika</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz2',this)">Běh / chůze</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz2',this)">Plavání</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz2',this)">Posilování</button>
+    </div>
+    <div class="waiting-msg" id="qcz2-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz2-fac" onclick="anketaReveal('qcz2','Běh / chůze')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz2-reveal">
+      <div class="reveal-number">Běh / chůze (35 % + 30 %)</div>
+      <div class="reveal-text">Běh 35 %, chůze/procházky 30 %, cyklistika 28 %, plavání 19 %, posilování 17 %, jóga 13 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz2-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz2-detail">
+        <div class="detail-section-title">Oblíbené sporty Čechů</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Běh</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="35%">35 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Chůze / procházky</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="30%">30 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Cyklistika</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="28%">28 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Plavání</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="19%">19 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Posilování</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="17%">17 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Jóga</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz2-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Naši potenciální zákazníci jsou běžci a chodci. Jak jim vysvětlíme, proč přidat švihadlo k běhání?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q5 — Sportovní pomůcky online -->
+  
+<div class="quiz-card locked" id="qcz3">
+    <div class="quiz-label">Otázka 3 / 20 — Motivace ke cvičení (celkově)</div>
+    <div class="quiz-question">Co je #1 motivace Čechů ke zvýšení intenzity cvičení nebo začít cvičit?</div>
+    <div class="anketa-options" id="qcz3-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz3',this)">Zhubnutí</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz3',this)">Zdraví</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz3',this)">Kondice</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz3',this)">Odreagování</button>
+    </div>
+    <div class="waiting-msg" id="qcz3-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz3-fac" onclick="anketaReveal('qcz3','Zdraví')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz3-reveal">
+      <div class="reveal-number">#1 Zdraví (30 %)</div>
+      <div class="reveal-text">Zdraví vede s 30 %, těsně před zhubnutím (28 %) a kondicí (23 %). Stres jen 13 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz3-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz3-detail">
+        <div class="detail-section-title">Motivace ke cvičení — CZ celkem</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zdraví</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="30%">30 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zhubnutí</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="28%">28 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kondice</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="23%">23 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Stres</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spánek</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Vzor pro děti</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="6%">6 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nová zkušenost</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="4%">4 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz3-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Zdraví je #1, ale v komunikaci často tlačíme kondici a výkon. Odpovídá naše messaging reálné motivaci?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q3 — Motivace muži vs ženy -->
+  
+<div class="quiz-card locked" id="qcz4">
+    <div class="quiz-label">Otázka 4 / 20 — Motivace muži vs ženy</div>
+    <div class="quiz-question">Muži vs ženy — kdo víc táhne ke kondici a kdo ke zhubnutí?</div>
+    <div class="anketa-options" id="qcz4-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz4',this)">Muži: zhubnutí / Ženy: kondice</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz4',this)">Muži: kondice / Ženy: zhubnutí</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz4',this)">Stejné u obou</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz4',this)">Muži: zdraví / Ženy: stres</button>
+    </div>
+    <div class="waiting-msg" id="qcz4-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz4-fac" onclick="anketaReveal('qcz4','Muži: kondice / Ženy: zhubnutí')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz4-reveal">
+      <div class="reveal-number">Muži: kondice / Ženy: zhubnutí</div>
+      <div class="reveal-text">Muži: kondice 31 %, zdraví 30 %. Ženy: zhubnutí 31 %, zdraví 30 %. Jasná segmentace.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz4-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz4-detail">
+        <div class="detail-section-title">Muži — top motivace</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kondice</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="31%">31 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zdraví</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="30%">30 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zhubnutí</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="24%">24 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spánek</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="16%">16 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Stres</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="8%">8 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:16px;">Ženy — top motivace</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zhubnutí</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="31%">31 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zdraví</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="30%">30 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kondice</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="17%">17 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Stres</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="17%">17 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spánek</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="6%">6 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz4-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Máme jeden content pro oba — nebo víme, jak segmentovat kreativu? Co by fungovalo jinak pro muže vs ženy?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q4 — Jaké sporty dělají -->
+  
+<div class="quiz-card locked" id="qcz5">
+    <div class="quiz-label">Otázka 5 / 20 — Sportovní pomůcky online</div>
+    <div class="quiz-question">Kolik % Čechů si někdy koupilo sportovní pomůcky online?</div>
+    <div class="anketa-options" id="qcz5-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz5',this)">45 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz5',this)">60 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz5',this)">75 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz5',this)">88 %</button>
+    </div>
+    <div class="waiting-msg" id="qcz5-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz5-fac" onclick="anketaReveal('qcz5','75 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz5-reveal">
+      <div class="reveal-number">75 %</div>
+      <div class="reveal-text">75 % nakoupilo sportovní pomůcky online. Věk 18–24: 81 %, 25–34: 72 %, 35–44: 77 %, 45–54: 76 %, 55+: 63 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz5-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz5-detail">
+        <div class="detail-section-title">Online nákup sportovních pomůcek — podle věku</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">18–24 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="81%">81 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">25–34 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="72%">72 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">35–44 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="77%">77 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">45–54 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="76%">76 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">55+ let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="63%">63 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz5-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">75 % online nákupů — e-commerce je klíčový kanál. Jak optimalizovat cestu od discovery po checkout?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q6 — Zkušenost se švihadlem -->
+  
+<div class="quiz-card locked" id="qcz6">
+    <div class="quiz-label">Otázka 6 / 20 — Zkušenost se švihadlem</div>
+    <div class="quiz-question">Kolik % Čechů má švihadlo doma, ale nepoužívá ho?</div>
+    <div class="anketa-options" id="qcz6-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz6',this)">15 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz6',this)">25 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz6',this)">37 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz6',this)">50 %</button>
+    </div>
+    <div class="waiting-msg" id="qcz6-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz6-fac" onclick="anketaReveal('qcz6','37 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz6-reveal">
+      <div class="reveal-number">37 %</div>
+      <div class="reveal-text">37 % má švihadlo doma a nepoužívá. 36 % zná jen ze školy. Aktivně cvičí pouze 17 %. Nemá žádnou zkušenost 10 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz6-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz6-detail">
+        <div class="detail-section-title">Zkušenosti se švihadlem — CZ</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Doma nepoužívá</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="37%">37 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Jen ze školy</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="36%">36 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Aktivně používá</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="17%">17 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Žádná zkušenost</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz6-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">37 % má švihadlo ve skříni — to je obrovský reaktivační segment. Co by je dostalo švihadlo zpátky do ruky?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q7 — Jak švihadlo vnímají -->
+  
+<div class="quiz-card locked" id="qcz7">
+    <div class="quiz-label">Otázka 7 / 20 — Jak švihadlo vnímají</div>
+    <div class="quiz-question">Jak Češi primárně vnímají švihadlo?</div>
+    <div class="anketa-options" id="qcz7-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz7',this)">Aktivita pro děti</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz7',this)">Forma cvičení</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz7',this)">Zábava</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz7',this)">Nezajímá mě</button>
+    </div>
+    <div class="waiting-msg" id="qcz7-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz7-fac" onclick="anketaReveal('qcz7','Forma cvičení')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz7-reveal">
+      <div class="reveal-number">Forma cvičení (72 %)</div>
+      <div class="reveal-text">72 % ho vnímá jako formu cvičení — to je skvělé. Zároveň 31 % jako zábavu, 31 % jako aktivitu pro děti. Jen 10 % ho odmítá.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz7-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz7-detail">
+        <div class="detail-section-title">Jak Češi vnímají švihadlo</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Forma cvičení</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="72%">72 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zábava</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="31%">31 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Pro děti</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="31%">31 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nezájem</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nevím</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="4%">4 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz7-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">72 % vnímá švihadlo jako cvičení — bariéra není v image, ale v aktivaci. Co chybí k přechodu od vnímání k akci?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q8 — Kde by skákali -->
+  
+<div class="quiz-card locked" id="qcz8">
+    <div class="quiz-label">Otázka 8 / 20 — Zájem o švihadlo</div>
+    <div class="quiz-question">Kolik % Čechů by pravděpodobně zařadilo skákání přes švihadlo do svého cvičení?</div>
+    <div class="anketa-options" id="qcz8-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz8',this)">22 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz8',this)">31 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz8',this)">41 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz8',this)">55 %</button>
+    </div>
+    <div class="waiting-msg" id="qcz8-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz8-fac" onclick="anketaReveal('qcz8','41 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz8-reveal">
+      <div class="reveal-number">41 %</div>
+      <div class="reveal-text">41 % by pravděpodobně nebo velmi pravděpodobně zařadilo švihadlo do cvičení. 39 % říká, že je to nepravděpodobné. 20 % neví.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz8-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz8-detail">
+        <div class="detail-section-title">Pravděpodobnost zařazení švihadla do cvičení</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Velmi pravděpodobně</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="7%">7 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Pravděpodobně ano</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="34%">34 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nevím</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="20%">20 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spíše ne</div><div class="mini-bar-track"><div class="mini-bar-fill" style="background:rgba(233,36,36,0.4);height:100%;border-radius:0 6px 6px 0;display:flex;align-items:center;padding-left:8px;font-size:0.78rem;" data-w="22%">22 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Velmi nepravděpodobně</div><div class="mini-bar-track"><div class="mini-bar-fill" style="background:rgba(233,36,36,0.4);height:100%;border-radius:0 6px 6px 0;display:flex;align-items:center;padding-left:8px;font-size:0.78rem;" data-w="17%">17 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz8-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">41 % je reálný zájem — ale 39 % říká ne. Co je u těch 39 % za blocker? Je to bariéra (místo, zdraví) nebo nezájem? Jak je segmentujeme?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q16 — Co přesvědčí ke koupi -->
+  
+<div class="quiz-card locked" id="qcz9">
+    <div class="quiz-label">Otázka 9 / 20 — Bariéry #1</div>
+    <div class="quiz-question">Co je #1 překážka Čechů ke skákání přes švihadlo?</div>
+    <div class="anketa-options" id="qcz9-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz9',this)">Zdravotní omezení</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz9',this)">Nemám místo</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz9',this)">Nemám čas</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz9',this)">Obava z hluku</button>
+    </div>
+    <div class="waiting-msg" id="qcz9-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz9-fac" onclick="anketaReveal('qcz9','Nemám místo')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz9-reveal">
+      <div class="reveal-number">#1 Nemám místo (31 %)</div>
+      <div class="reveal-text">Místo 31 %, zdraví 25 %, čas 19 %, hluk 19 %, nevím jak 13 %, nezájem 11 %, nevěřím v účinnost 10 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz9-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz9-detail">
+        <div class="detail-section-title">Všechny bariéry — CZ</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nemám místo</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="31%">31 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zdravotní omezení</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="25%">25 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nemám čas</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="19%">19 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Obava z hluku</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="19%">19 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nevím jak na to</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nezájem</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="11%">11 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nevěřím v účinnost</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz9-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Místo a hluk jsou fyzické bariéry, ne motivační. Jak je řešíme v contentu? Máme videa z malých bytů?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q11 — Bariéry podle věku -->
+  
+<div class="quiz-card locked" id="qcz10">
+    <div class="quiz-label">Otázka 10 / 20 — Bariéry podle věku</div>
+    <div class="quiz-question">Kdo se nejvíce bojí zdravotních omezení (kolena, kotníky) při skákání?</div>
+    <div class="anketa-options" id="qcz10-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz10',this)">18–24 let</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz10',this)">35–44 let</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz10',this)">45–54 let</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz10',this)">55+ let</button>
+    </div>
+    <div class="waiting-msg" id="qcz10-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz10-fac" onclick="anketaReveal('qcz10','55+ let')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz10-reveal">
+      <div class="reveal-number">55+ let (58 %)</div>
+      <div class="reveal-text">Zdraví jako bariéra: 55+ let 58 %, 45–54 let 36 %, 35–44 let 18 %, 25–34 let 20 %, 18–24 let 13 %. Místo jako bariéra: nejvíce mladí 18–24 (50 %).</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz10-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz10-detail">
+        <div class="detail-section-title">Zdravotní bariéra podle věku</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">55+ let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="58%">58 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">45–54 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="36%">36 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">35–44 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="18%">18 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">25–34 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="20%">20 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">18–24 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:14px;">Bariéra „nemám místo" podle věku</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">18–24 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="50%">50 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">25–34 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="35%">35 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">35–44 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="28%">28 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">45–54 let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="22%">22 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">55+ let</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="18%">18 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz10-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Pro 55+ je to zdraví, pro 18–24 je to místo. Máme age-specific messaging? Nebo komunikujeme stejně na všechny?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q12 — Znalost Švihej -->
+  
+<div class="quiz-card locked" id="qcz11">
+    <div class="quiz-label">Otázka 11 / 20 — Motivace zařadit švihadlo</div>
+    <div class="quiz-question">Co by nejvíce motivovalo Čechy zařadit švihadlo do cvičení?</div>
+    <div class="anketa-options" id="qcz11-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz11',this)">Zdraví</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz11',this)">Zhubnutí</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz11',this)">Kondice</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz11',this)">Odreagování</button>
+    </div>
+    <div class="waiting-msg" id="qcz11-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz11-fac" onclick="anketaReveal('qcz11','Kondice')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz11-reveal">
+      <div class="reveal-number">Kondice / zesílení (63 %)</div>
+      <div class="reveal-text">Kondice/zesílení 63 %, zhubnutí 53 %, zdraví 40 %, odreagování 25 %. Zajímavé: kondice vede výrazně před zdravím (opačně než u obecné motivace ke cvičení).</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz11-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz11-detail">
+        <div class="detail-section-title">Co by motivovalo zařadit švihadlo</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kondice</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="63%">63 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zhubnutí</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="53%">53 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zdraví</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="40%">40 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Odreagování</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="25%">25 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nová zkušenost</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="18%">18 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spánek</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="14%">14 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Vzor pro děti</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="14%">14 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz11-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Švihadlo = kondice a spalování. Odpovídá tomu náš primární claim? Nebo stále komunikujeme zdraví obecně?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q10 — Bariéry #1 -->
+  
+<div class="quiz-card locked" id="qcz12">
+    <div class="quiz-label">Otázka 12 / 20 — Kde by skákali</div>
+    <div class="quiz-question">Kde by Češi nejraději skákali přes švihadlo?</div>
+    <div class="anketa-options" id="qcz12-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz12',this)">V parku</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz12',this)">V tělocvičně / fitku</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz12',this)">Doma venku</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz12',this)">Doma uvnitř</button>
+    </div>
+    <div class="waiting-msg" id="qcz12-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz12-fac" onclick="anketaReveal('qcz12','Doma venku')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz12-reveal">
+      <div class="reveal-number">Doma venku (63 %)</div>
+      <div class="reveal-text">63 % doma venku (zahrada/dvůr), 61 % doma uvnitř, 24 % v tělocvičně/fitku, 13 % v parku.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz12-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz12-detail">
+        <div class="detail-section-title">Preferované místo pro švihadlo</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Doma venku</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="63%">63 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Doma uvnitř</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="61%">61 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Tělocvična / fitko</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="24%">24 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Park</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz12-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Švihadlo je doma sport — ne gym sport. Jak to reflektujeme v contentu? Ukazujeme obývák a zahradu?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q9 — Motivace zařadit švihadlo -->
+  
+<div class="quiz-card locked" id="qcz13">
+    <div class="quiz-label">Otázka 13 / 20 — Znalost Švihej</div>
+    <div class="quiz-question">Kolik % Čechů zná značku Švihej?</div>
+    <div class="anketa-options" id="qcz13-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz13',this)">5 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz13',this)">10 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz13',this)">20 %</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz13',this)">35 %</button>
+    </div>
+    <div class="waiting-msg" id="qcz13-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz13-fac" onclick="anketaReveal('qcz13','20 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz13-reveal">
+      <div class="reveal-number">20 %</div>
+      <div class="reveal-text">20 % zná Švihej. Nejlépe ji znají ženy a věková skupina 18–44 let. 15 % zaregistrovalo Lednovou challenge, 13 % Kluky šviháky, 10 % Skoč do toho.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz13-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz13-detail">
+        <div class="detail-section-title">Znalost Švihej a kampaní</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Zná Švihej</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="20%">20 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Lednová challenge</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="15%">15 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kluci šviháci</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="13%">13 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Skoč do toho</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="10%">10 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz13-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Znají nás hlavně ženy 18–44. Jak vypadá náš content pro muže? A co věk 45+?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q13 — Jak vnímají brand Švihej -->
+  
+<div class="quiz-card locked" id="qcz14">
+    <div class="quiz-label">Otázka 14 / 20 — Jak vnímají brand Švihej</div>
+    <div class="quiz-question">Jaký atribut Švihej hodnotí nejlépe ti, kdo ji znají?</div>
+    <div class="anketa-options" id="qcz14-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz14',this)">Kvalitní</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz14',this)">Inspirativní</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz14',this)">Přátelská / Důvěryhodná</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz14',this)">Vtipná</button>
+    </div>
+    <div class="waiting-msg" id="qcz14-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz14-fac" onclick="anketaReveal('qcz14','Přátelská / Důvěryhodná')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz14-reveal">
+      <div class="reveal-number">Přátelská / Důvěryhodná (79 %)</div>
+      <div class="reveal-text">Přátelská 79 %, Důvěryhodná 79 %, Motivující 78 %, Inspirativní 77 %, Profesionální 77 %, Smysluplná 77 %, Autentická 68 %, Kvalitní 67 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz14-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz14-detail">
+        <div class="detail-section-title">Hodnocení značky Švihej (% kteří souhlasí 4+5 ze 5)</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Přátelská</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="79%">79 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Důvěryhodná</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="79%">79 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Motivující</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="78%">78 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Inspirativní</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="77%">77 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Profesionální</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="77%">77 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Smysluplná</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="77%">77 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Autentická</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="68%">68 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kvalitní</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="67%">67 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:16px;">Co lidi napadne ve spojení se Švihej — přímé citáty</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Skákání přes švihadlo, výzvy zaměřené na sbírku peněz pro potřebné"</div>
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Propojení sportu / zdraví a dobrého skutku"</div>
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Bratři, kteří za projektem stojí — 2 muži, co založili tuto společnost"</div>
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Skvělí trenéři a sportovci věnující se všemu okolo švihadla, snaží se dostat sport do podvědomí širší veřejnosti"</div>
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Komunita a profíci"</div>
+          <div style="background:rgba(255,223,79,0.07);border-left:3px solid var(--yellow);padding:8px 12px;border-radius:0 8px 8px 0;font-size:0.85rem;color:#ccd6e0;font-style:italic;">"Kvalitní švihadla" / "Prodej a propagace švihadel"</div>
+        </div></div>
+    </div>
+    <div class="discussion-box" id="qcz14-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Přátelská a důvěryhodná — ne 'cool' nebo 'výkonnostní'. Je to naše silná stránka nebo slabá? Chceme být vnímáni jinak?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q14 — Design Katana Rope -->
+  
+<div class="quiz-card locked" id="qcz15">
+    <div class="quiz-label">Otázka 15 / 20 — Design Katana Rope</div>
+    <div class="quiz-question">Jak hodnotí Češi design Katana Rope?</div>
+    <div class="anketa-options" id="qcz15-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz15',this)">Nevýrazný (5 %)</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz15',this)">Normální (39 %)</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz15',this)">Stylový (56 %)</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz15',this)">Nelíbí se mi</button>
+    </div>
+    <div class="waiting-msg" id="qcz15-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz15-fac" onclick="anketaReveal('qcz15','Stylový (56 %)')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz15-reveal">
+      <div class="reveal-number">Stylový (56 %)</div>
+      <div class="reveal-text">56 % stylový, 39 % normální, 5 % nevýrazný. Muži: 61 % stylový. Ženy: 48 % stylový, 45 % normální.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz15-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz15-detail">
+        <div class="detail-section-title">Design Katana Rope — celkově</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Stylový</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="56%">56 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Normální</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="39%">39 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Nevýrazný</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="5%">5 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:14px;">Stylový — muži vs ženy</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Muži: stylový</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="61%">61 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Ženy: stylový</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="48%">48 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Ženy: normální</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="45%">45 %</div></div></div>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz15-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Design funguje — ale u žen méně přesvědčivě než u mužů. Co by v designu oslovilo více ženy?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q15 — Název Katana Rope -->
+  
+<div class="quiz-card locked" id="qcz16">
+    <div class="quiz-label">Otázka 16 / 20 — Co přesvědčí ke koupi</div>
+    <div class="quiz-question">Co by nejvíce přesvědčilo Čechy ke koupi Katana Rope?</div>
+    <div class="anketa-options" id="qcz16-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz16',this)">Doporučení od influencera</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz16',this)">Design</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz16',this)">Doporučení od kamaráda</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz16',this)">Kvalita a odolnost</button>
+    </div>
+    <div class="waiting-msg" id="qcz16-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz16-fac" onclick="anketaReveal('qcz16','Kvalita a odolnost')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz16-reveal">
+      <div class="reveal-number">Kvalita a odolnost (68 %)</div>
+      <div class="reveal-text">Kvalita/odolnost 68 %, design 32 %, doporučení od kamaráda 28 %, video návody 27 %, komunita 15 %, influencer 8 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz16-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz16-detail">
+        <div class="detail-section-title">Co přesvědčí ke koupi — celkově</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Kvalita a odolnost</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="68%">68 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Design</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="32%">32 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Doporučení od kamaráda</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="28%">28 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Video návody</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="27%">27 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Aktivní komunita</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="15%">15 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Doporučení od influencera</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="8%">8 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:16px;">Podle věku — kdo co chce</div>
+        <div style="overflow-x:auto;margin-top:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;color:#ccd6e0;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+              <th style="text-align:left;padding:6px 8px;color:var(--yellow);font-weight:700;"></th>
+              <th style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:700;">18–24</th>
+              <th style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:700;">25–34</th>
+              <th style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:700;">35–44</th>
+              <th style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:700;">45–54</th>
+              <th style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:700;">55+</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Kvalita a odolnost</td>
+              <td style="text-align:center;padding:5px 8px;">81 %</td><td style="text-align:center;padding:5px 8px;">67 %</td><td style="text-align:center;padding:5px 8px;">71 %</td><td style="text-align:center;padding:5px 8px;">64 %</td><td style="text-align:center;padding:5px 8px;">53 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Design</td>
+              <td style="text-align:center;padding:5px 8px;">38 %</td><td style="text-align:center;padding:5px 8px;">44 %</td><td style="text-align:center;padding:5px 8px;">32 %</td><td style="text-align:center;padding:5px 8px;">24 %</td><td style="text-align:center;padding:5px 8px;">11 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Doporučení od kamaráda</td>
+              <td style="text-align:center;padding:5px 8px;">38 %</td><td style="text-align:center;padding:5px 8px;">28 %</td><td style="text-align:center;padding:5px 8px;">23 %</td><td style="text-align:center;padding:5px 8px;">33 %</td><td style="text-align:center;padding:5px 8px;">26 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Video návody</td>
+              <td style="text-align:center;padding:5px 8px;">38 %</td><td style="text-align:center;padding:5px 8px;">23 %</td><td style="text-align:center;padding:5px 8px;">29 %</td><td style="text-align:center;padding:5px 8px;">31 %</td><td style="text-align:center;padding:5px 8px;">16 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Komunita</td>
+              <td style="text-align:center;padding:5px 8px;">19 %</td><td style="text-align:center;padding:5px 8px;">21 %</td><td style="text-align:center;padding:5px 8px;">14 %</td><td style="text-align:center;padding:5px 8px;">10 %</td><td style="text-align:center;padding:5px 8px;">11 %</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 8px;">Influencer / reklama</td>
+              <td style="text-align:center;padding:5px 8px;">6 %</td><td style="text-align:center;padding:5px 8px;">7 %</td><td style="text-align:center;padding:5px 8px;">12 %</td><td style="text-align:center;padding:5px 8px;">2 %</td><td style="text-align:center;padding:5px 8px;">16 %</td>
+            </tr>
+          </tbody>
+        </table>
+        </div></div>
+    </div>
+    <div class="discussion-box" id="qcz16-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Kvalita vede výrazně — ale jak ji komunikujeme? Máme content, který ukazuje odolnost a životnost?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q17 — Cena 699 Kč -->
+  
+<div class="quiz-card locked" id="qcz17">
+    <div class="quiz-label">Otázka 17 / 20 — Cena 699 Kč</div>
+    <div class="quiz-question">Jak Češi vnímají cenu 699 Kč za Katana Rope?</div>
+    <div class="anketa-options" id="qcz17-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz17',this)">Velmi výhodná</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz17',this)">Průměrná</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz17',this)">Spíše drahá</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz17',this)">Velmi drahá</button>
+    </div>
+    <div class="waiting-msg" id="qcz17-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz17-fac" onclick="anketaReveal('qcz17','Průměrná')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz17-reveal">
+      <div class="reveal-number">Průměrná (40 %)</div>
+      <div class="reveal-text">40 % průměrná, 27 % spíše výhodná, 20 % spíše drahá, 9 % velmi výhodná, 4 % velmi drahá. Celkem 73 % hodnotí pozitivně nebo neutrálně.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz17-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz17-detail">
+        <div class="detail-section-title">Vnímání ceny 699 Kč</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Průměrná</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="40%">40 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spíše výhodná</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="27%">27 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Spíše drahá</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="20%">20 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Velmi výhodná</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="9%">9 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Velmi drahá</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="4%">4 %</div></div></div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-top:14px;">Průměrná přiměřená cena podle respondentů: <strong style="color:var(--yellow);">437 Kč</strong> (my prodáváme za 699 Kč)</p>
+      </div>
+    </div>
+    <div class="discussion-box" id="qcz17-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">40 % říká průměrná — ale průměrná přiměřená cena je 437 Kč (my prodáváme za 699 Kč). Jak odůvodňujeme prémiovou cenu v produktové komunikaci?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q18 — Appka, výzvy nebo návody? -->
+  
+<div class="quiz-card locked" id="qcz18">
+    <div class="quiz-label">Otázka 18 / 20 — Appka, výzvy nebo návody?</div>
+    <div class="quiz-question">Co by nejvíce zvýšilo zájem Čechů o koupi a používání švihadla?</div>
+    <div class="anketa-options" id="qcz18-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz18',this)">14/30denní výzvy</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz18',this)">Workshop s trenérem</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz18',this)">Appka zdarma</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz18',this)">Návody v češtině</button>
+    </div>
+    <div class="waiting-msg" id="qcz18-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz18-fac" onclick="anketaReveal('qcz18','Appka zdarma')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz18-reveal">
+      <div class="reveal-number">Appka zdarma (57 % zájem 4+5)</div>
+      <div class="reveal-text">Appka zdarma: 57 % zájem (4+5), návody v češtině: 43 %, workshop s trenérem: 42 %, 14/30denní výzvy: 36 %, komunita: 37 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz18-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz18-detail">
+        <div class="detail-section-title">Zájem o benefity — % kteří hodnotili 4+5 (výrazně by zvýšilo zájem)</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Appka zdarma (přeskoky, pokrok)</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="57%">57 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Návody v češtině</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="43%">43 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Workshop s trenérem</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="42%">42 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Aktivní komunita uživatelů</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="37%">37 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">14 nebo 30denní výzvy</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="36%">36 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:16px;">Plná distribuce odpovědí (Likert 1–5)</div>
+        <div style="overflow-x:auto;margin-top:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.78rem;color:#ccd6e0;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+              <th style="text-align:left;padding:5px 8px;color:var(--yellow);font-weight:700;min-width:140px;"></th>
+              <th style="padding:5px 6px;text-align:center;color:var(--muted);font-weight:600;">1 – vůbec</th>
+              <th style="padding:5px 6px;text-align:center;color:var(--muted);font-weight:600;">2</th>
+              <th style="padding:5px 6px;text-align:center;color:var(--muted);font-weight:600;">3</th>
+              <th style="padding:5px 6px;text-align:center;color:var(--yellow);font-weight:700;">4</th>
+              <th style="padding:5px 6px;text-align:center;color:var(--yellow);font-weight:700;">5 – výrazně</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Appka zdarma</td>
+              <td style="text-align:center;padding:5px 6px;">10 %</td><td style="text-align:center;padding:5px 6px;">7 %</td><td style="text-align:center;padding:5px 6px;">27 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">26 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">30 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">14/30denní výzvy</td>
+              <td style="text-align:center;padding:5px 6px;">14 %</td><td style="text-align:center;padding:5px 6px;">9 %</td><td style="text-align:center;padding:5px 6px;">28 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">18 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">18 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Návody v češtině</td>
+              <td style="text-align:center;padding:5px 6px;">25 %</td><td style="text-align:center;padding:5px 6px;">9 %</td><td style="text-align:center;padding:5px 6px;">18 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">18 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">25 %</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px;">Workshop s trenérem</td>
+              <td style="text-align:center;padding:5px 6px;">17 %</td><td style="text-align:center;padding:5px 6px;">14 %</td><td style="text-align:center;padding:5px 6px;">21 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">21 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">21 %</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 8px;">Komunita uživatelů</td>
+              <td style="text-align:center;padding:5px 6px;">21 %</td><td style="text-align:center;padding:5px 6px;">11 %</td><td style="text-align:center;padding:5px 6px;">20 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">17 %</td><td style="text-align:center;padding:5px 6px;color:var(--yellow);">20 %</td>
+            </tr>
+          </tbody>
+        </table>
+        </div></div>
+    </div>
+    <div class="discussion-box" id="qcz18-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">Appka vede — ale máme ji? Co z tohoto seznamu lze spustit nejrychleji s největším dopadem?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q19 — Kde hledají švihadlo online -->
+  
+<div class="quiz-card locked" id="qcz19">
+    <div class="quiz-label">Otázka 19 / 20 — Kde hledají švihadlo online</div>
+    <div class="quiz-question">Kde Češi primárně hledají švihadlo online?</div>
+    <div class="anketa-options" id="qcz19-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz19',this)">Heureka</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz19',this)">Instagram / sociální sítě</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz19',this)">Google</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz19',this)">Decathlon.cz</button>
+    </div>
+    <div class="waiting-msg" id="qcz19-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz19-fac" onclick="anketaReveal('qcz19','Google')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz19-reveal">
+      <div class="reveal-number">Google (69 %)</div>
+      <div class="reveal-text">Google 69 %, Heureka 12 %, Seznam 9 %, Sportisimo 8 %, AI (ChatGPT/Gemini) 5 %, Decathlon 3 %. Vyhledávací slova: 'švihadlo', 'švihadlo na cvičení', 'švihadlo pro dospělé'.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz19-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz19-detail">
+        <div class="detail-section-title">Kde hledají švihadlo online</div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Google</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="69%">69 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Heureka</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="12%">12 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Seznam</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="9%">9 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Sportisimo.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="8%">8 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">AI (ChatGPT / Gemini)</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="5%">5 %</div></div></div>
+        <div class="mini-bar-row"><div class="mini-bar-label">Decathlon.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="3%">3 %</div></div></div>
+        <div class="detail-section-title" style="margin-top:14px;">Co by zadali do vyhledávače — přesná slova</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo na cvičení</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo pro dospělé</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">prodej švihadla</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo a cena</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">jumping rope</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo fitness</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">švihadlo na doma</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">sportovní nářadí</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">cvičební pomůcky</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">jak vybrat švihadlo</span>
+          <span style="background:rgba(255,223,79,0.12);border:1px solid rgba(255,223,79,0.3);padding:4px 10px;border-radius:20px;font-size:0.8rem;color:#e0e0e0;">skákání pro zdraví</span>
+        </div>
+        <div style="margin-top:10px;font-size:0.8rem;color:var(--muted);">69 % by použilo vyhledávací slovo <strong style="color:#fff;">ŠVIHADLO</strong> — bez modifikátoru, přímé hledání produktu.</div></div>
+    </div>
+    <div class="discussion-box" id="qcz19-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">69 % jde přes Google — jsme tam? Jaká je naše SEO pozice na klíčová slova jako 'švihadlo pro dospělé'?</div>
+    </div>
+  </div>
+
+  <!-- CZ Q20 — Kde by koupili -->
+  
+<div class="quiz-card locked" id="qcz20">
+    <div class="quiz-label">Otázka 20 / 20 — Kde by koupili</div>
+    <div class="quiz-question">Kde by Češi nejpravděpodobněji koupili švihadlo?</div>
+    <div class="anketa-options" id="qcz20-opts">
+      <button class="anketa-btn" onclick="anketaVote('qcz20',this)">svihej.cz</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz20',this)">Alza.cz</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz20',this)">Decathlon</button>
+      <button class="anketa-btn" onclick="anketaVote('qcz20',this)">Sportisimo</button>
+    </div>
+    <div class="waiting-msg" id="qcz20-wait"><div class="waiting-dot"></div>Čekejte na odhalení správné odpovědi…</div>
+    <button class="fac-reveal-btn" id="qcz20-fac" onclick="anketaReveal('qcz20','Sportisimo')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qcz20-reveal">
+      <div class="reveal-number">Sportisimo 77 % (osobně) / Decathlon online 47 %</div>
+      <div class="reveal-text">Online: Decathlon 47 %, Sportisimo 39 %, Google vyhledávání 19 %, Alza 14 %. Osobně: Sportisimo 77 %, Decathlon 55 %. svihej.cz uvádí jen 3 %.</div>
+      <button class="detail-toggle show" onclick="toggleDetail('qcz20-detail',this)">▾ Zobrazit více dat</button>
+      <div class="detail-block" id="qcz20-detail">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:8px;">
+          <div>
+            <div class="detail-section-title">🛒 Online nákup (67 % preferuje online)</div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Decathlon.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="47%">47 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Sportisimo.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="39%">39 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Google vyhledávání</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="19%">19 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Alza.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="14%">14 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Heureka.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="8%">8 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Allegro</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="7%">7 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label" style="color:var(--yellow);font-weight:700;">svihej.cz</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-cz" data-w="3%">3 %</div></div></div>
+          </div>
+          <div>
+            <div class="detail-section-title">🏪 Osobní nákup (33 % preferuje osobně)</div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Sportisimo</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="77%">77 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Decathlon</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="55%">55 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Insportline</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="11%">11 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label">Sportovní potřeby</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="9%">9 %</div></div></div>
+            <div class="mini-bar-row"><div class="mini-bar-label" style="color:var(--muted);font-size:0.78rem;">Tesco, Intersport, Globus…</div><div class="mini-bar-track"><div class="mini-bar-fill bar-fill-neutral" data-w="5%">5 %</div></div></div>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:10px 14px;background:rgba(255,223,79,0.08);border-left:3px solid var(--yellow);border-radius:0 8px 8px 0;font-size:0.82rem;color:#ccd6e0;">
+          ⚠️ <strong style="color:var(--yellow);">svihej.cz uvádí jen 3 %</strong> — zatímco Decathlon a Sportisimo dominují. Přímý prodej má nejvyšší marži, ale zákazníci nás tam nehledají.
+        </div></div>
+    </div>
+    <div class="discussion-box" id="qcz20-disc">
+      <div class="discussion-label">💬 K zamyšlení pro marketing:</div>
+      <div class="discussion-q">svihej.cz zmiňují jen 3 % — přitom tam má zákazník nejlepší zážitek a my nejvyšší marži. Jak dostat lidi přímo k nám?</div>
+    </div>
+  </div>
+
+  <!-- CZ EXTRA (unlocked after Q20) -->
+  <div class="unlockable" id="cz-extra">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--yellow);">47 %</div><div class="stat-desc">aktivně se hýbe a docela často sportuje</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--yellow);">75 %</div><div class="stat-desc">někdy koupilo sportovní pomůcky online</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--yellow);">37 %</div><div class="stat-desc">má švihadlo doma, ale nepoužívá — reaktivační segment</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--yellow);">20 %</div><div class="stat-desc">zná brand Švihej (z toho 79 % ji hodnotí jako přátelskou)</div></div>
+    </div>
+    <div class="insight-box">
+      <h3>Klíčový insight — Česko</h3>
+      <p>Zákazník sportuje rekreačně, motivuje ho zdraví a kondice, kupuje online a hledá přes Google. Švihadlo vnímá jako formu cvičení (72 %), ale má ho ve skříni (37 %). Brand Švihej hodnotí výborně — kdo ji zná. <strong>Problém není produkt ani image. Je to reach a reaktivace.</strong></p>
+    </div>
+    <div class="market-nav-hint">
+      <a href="#sk">Přejít na Slovensko →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SLOVENSKO ═══════════════════════════ -->
+<hr class="section-sep" id="sk">
+<div class="section">
+  <div class="market-header">
+    <div class="market-flag">🇸🇰</div>
+    <div class="market-title">
+      <h2 style="color:var(--yellow);">Slovenská republika</h2>
+      <p>Březen 2026 · 202 respondentů · online, reprezentativní vzorek</p>
+    </div>
+  </div>
+  <div class="market-divider" style="background:linear-gradient(to right,var(--yellow),transparent);"></div>
+
+  <!-- SK Q1 — Znalost značky -->
+  <div class="quiz-card" id="qsk1">
+    <div class="quiz-label">Otázka 1 / 3 — Znalost značky</div>
+    <div class="quiz-question">Kolik % Slováků zná značku Švihej? (vs. 20 % v ČR)</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qsk1',this,'4 %')">4 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk1',this,'9 %')">9 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk1',this,'18 %')">18 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk1',this,'25 %')">25 %</button>
+    </div>
+    <div class="waiting-msg" id="qsk1-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qsk1-fac" onclick="revealAnswer('qsk1','9 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qsk1-reveal">
+      <div class="reveal-number">9 %</div>
+      <div class="reveal-text">Pouze 9 % Slováků zná Švihej — poloviční awareness oproti ČR (20 %). Ti, kdo ji znají, ji hodnotí fantasticky: Inspirativní 97 %, Kvalitní 91 %.</div>
+    </div>
+  </div>
+
+  <!-- SK Q2 — Švihadlo ze školy -->
+  <div class="quiz-card locked" id="qsk2">
+    <div class="quiz-label">Otázka 2 / 3 — Švihadlo ze školy</div>
+    <div class="quiz-question">Kolik % Slováků má zkušenosti se švihadlem pouze ze školy?</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qsk2',this,'20 %')">20 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk2',this,'33 %')">33 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk2',this,'44 %')">44 %</button>
+      <button class="quiz-btn" onclick="selectOption('qsk2',this,'60 %')">60 %</button>
+    </div>
+    <div class="waiting-msg" id="qsk2-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qsk2-fac" onclick="revealAnswer('qsk2','44 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qsk2-reveal">
+      <div class="reveal-number">44 %</div>
+      <div class="reveal-text">44 % Slováků zná švihadlo pouze ze školy — více než v ČR (36 %). Aktivně ho používá jen 17 %. Silnější školní asociace = silnější bariéra "to je pro děti".</div>
+    </div>
+  </div>
+
+  <!-- SK Q3 — Bariéry -->
+  <div class="quiz-card locked" id="qsk3">
+    <div class="quiz-label">Otázka 3 / 3 — Bariéry</div>
+    <div class="quiz-question">Co je #1 překážka Slováků ke skákání přes švihadlo? (v ČR je to nedostatek místa)</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qsk3',this,'Nedostatek místa')">Nedostatek místa</button>
+      <button class="quiz-btn" onclick="selectOption('qsk3',this,'Zdravotní omezení')">Zdravotní omezení</button>
+      <button class="quiz-btn" onclick="selectOption('qsk3',this,'Nemám čas')">Nemám čas</button>
+      <button class="quiz-btn" onclick="selectOption('qsk3',this,'Nezájem')">Nezájem</button>
+    </div>
+    <div class="waiting-msg" id="qsk3-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qsk3-fac" onclick="revealAnswer('qsk3','Zdravotní omezení')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qsk3-reveal">
+      <div class="reveal-number">#1 Zdraví (29 %)</div>
+      <div class="reveal-text">Na Slovensku je #1 bariéra zdravotní omezení (29 %), zatímco v ČR je to nedostatek místa (31 %). Pořadí bariér na SK: zdraví 29 % → místo 26 % → čas 19 % → nezájem 18 % → obava z hluku 13 %.</div>
+    </div>
+  </div>
+
+  <!-- SK EXTRA -->
+  <div class="unlockable" id="sk-extra">
+    <div style="margin:40px 0;">
+      <p style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:20px;">CZ vs SK — přímé srovnání</p>
+      <table class="compare-table">
+        <thead><tr><th>Ukazatel</th><th style="color:var(--yellow);">🇨🇿 ČR</th><th style="color:var(--yellow);">🇸🇰 SK</th></tr></thead>
+        <tbody>
+          <tr><td>Zná značku Švihej</td><td class="td-cz">20 %</td><td class="td-sk">9 %</td></tr>
+          <tr><td>Aktivně používá švihadlo</td><td class="td-cz">17 %</td><td class="td-sk">17 %</td></tr>
+          <tr><td>Má doma, nepoužívá</td><td class="td-cz">37 %</td><td class="td-sk">33 %</td></tr>
+          <tr><td>Zná pouze ze školy</td><td class="td-cz">36 %</td><td class="td-sk">44 %</td></tr>
+          <tr><td>Zařadilo by do tréninku</td><td class="td-cz">41 %</td><td class="td-sk">39 %</td></tr>
+          <tr><td>Koupilo pomůcky online</td><td class="td-cz">75 %</td><td class="td-sk">75 %</td></tr>
+          <tr><td>Design: stylový</td><td class="td-cz">56 %</td><td class="td-sk">55 %</td></tr>
+          <tr><td>Motivace zdraví (#1)</td><td class="td-cz">30 %</td><td class="td-sk">38 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight-box">
+      <h3>Klíčový insight — Slovensko</h3>
+      <p>Slovensko je téměř identické s ČR v potenciálu, ale <strong>brand awareness je 2× nižší</strong>. Kdo značku zná, hodnotí ji 97 % Inspirativní. Silnější školní asociace = klíčovější komunikovat švihadlo jako seriózní fitness nástroj pro dospělé. Čistý awareness gap — ne produkt, ne zájem.</p>
+    </div>
+    <div class="market-nav-hint">
+      <a href="#jp">Přejít na Japonsko →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ JAPONSKO ═══════════════════════════ -->
+<hr class="section-sep" id="jp">
+<div class="section">
+  <div class="market-header">
+    <div class="market-flag">🇯🇵</div>
+    <div class="market-title">
+      <h2 style="color:var(--jp-accent);">Japonsko</h2>
+      <p>Listopad–Prosinec 2025 · 113 respondentů · online + Crowdworks.jp</p>
+    </div>
+  </div>
+  <div class="market-divider" style="background:linear-gradient(to right,var(--jp-accent),transparent);"></div>
+  <div style="background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.2);border-radius:12px;padding:16px 24px;margin-bottom:40px;font-size:0.9rem;color:var(--jp-accent);">
+    ⚡ <strong>WOW trh.</strong> Jiná kultura, jiné bariéry, jiné příležitosti — ale překvapivě podobný zákazník.
+  </div>
+
+  <!-- JP Q1 — Cena -->
+  <div class="quiz-card" id="qjp1">
+    <div class="quiz-label">Otázka 1 / 4 — Cena</div>
+    <div class="quiz-question">Jakou cenu by Japonci navrhovali za kvalitní švihadlo? (Švihej se prodává za 6 000–7 000 JPY = 804–938 Kč)</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qjp1',this,'1 000 JPY')">1 000 JPY <span style="font-size:0.75rem;opacity:0.6;">(~134 Kč)</span></button>
+      <button class="quiz-btn" onclick="selectOption('qjp1',this,'2 440 JPY')">2 440 JPY <span style="font-size:0.75rem;opacity:0.6;">(~327 Kč)</span></button>
+      <button class="quiz-btn" onclick="selectOption('qjp1',this,'4 500 JPY')">4 500 JPY <span style="font-size:0.75rem;opacity:0.6;">(~603 Kč)</span></button>
+      <button class="quiz-btn" onclick="selectOption('qjp1',this,'6 000 JPY')">6 000 JPY <span style="font-size:0.75rem;opacity:0.6;">(~804 Kč)</span></button>
+    </div>
+    <div class="waiting-msg" id="qjp1-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qjp1-fac" onclick="revealAnswer('qjp1','2 440 JPY')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qjp1-reveal">
+      <div class="reveal-number">2 440 JPY <span style="font-size:1rem;color:var(--muted);font-weight:600;">≈ 327 Kč</span></div>
+      <div class="reveal-text">Průměrná navrhovaná cena je 2 440 JPY (~327 Kč) — méně než polovina reálné ceny 6 000–7 000 JPY (~804–938 Kč). 93 % označilo prodejní cenu jako "docela drahou" nebo "velmi drahou". Respondenti psali: <em>"6 000 jenů za švihadlo? Šokující."</em> Švihadlo v 100jenové prodejně je normální.</div>
+    </div>
+  </div>
+
+  <!-- JP Q2 — Název -->
+  <div class="quiz-card locked" id="qjp2">
+    <div class="quiz-label">Otázka 2 / 4 — Název</div>
+    <div class="quiz-question">Jak Japonci hodnotí název "Katana Rope"?</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qjp2',this,'Milují to')">Milují to</button>
+      <button class="quiz-btn" onclick="selectOption('qjp2',this,'Převážně negativně')">Převážně negativně</button>
+      <button class="quiz-btn" onclick="selectOption('qjp2',this,'Neutrální, spíše nelíbí')">Neutrální, spíše nelíbí</button>
+      <button class="quiz-btn" onclick="selectOption('qjp2',this,'Líbí se jim')">Líbí se jim</button>
+    </div>
+    <div class="waiting-msg" id="qjp2-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qjp2-fac" onclick="revealAnswer('qjp2','Neutrální, spíše nelíbí')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qjp2-reveal">
+      <div class="reveal-number">35 % nelíbí</div>
+      <div class="reveal-text">46 % neutrální, 35 % nelíbí, 20 % líbí. Asociace s katanou evokuje nebezpečí. Respondent napsal: "Katana Rope působí děsivě." 43 % pozitivně reaguje na českou výrobu — název evokující Česko může fungovat lépe.</div>
+    </div>
+  </div>
+
+  <!-- JP Q3 — Zájem o zařazení -->
+  <div class="quiz-card locked" id="qjp3">
+    <div class="quiz-label">Otázka 3 / 4 — Zájem o zařazení</div>
+    <div class="quiz-question">Kolik % Japonců by kladně zařadilo švihadlo do svého cvičení?</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qjp3',this,'8 %')">8 %</button>
+      <button class="quiz-btn" onclick="selectOption('qjp3',this,'22 %')">22 %</button>
+      <button class="quiz-btn" onclick="selectOption('qjp3',this,'40 %')">40 %</button>
+      <button class="quiz-btn" onclick="selectOption('qjp3',this,'55 %')">55 %</button>
+    </div>
+    <div class="waiting-msg" id="qjp3-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qjp3-fac" onclick="revealAnswer('qjp3','22 %')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qjp3-reveal">
+      <div class="reveal-number">22 %</div>
+      <div class="reveal-text">22 % by zařadilo kladně. Z toho jsou 2/3 ženy ve věku 25–44 let. 73 % respondentů švihadlo vnímá jako formu cvičení. Cílová skupina: ženy 25–44 (design + influencer/SNS pro 25–34, quality content pro 35–44).</div>
+    </div>
+  </div>
+
+  <!-- JP Q4 — Bariéry -->
+  <div class="quiz-card locked" id="qjp4">
+    <div class="quiz-label">Otázka 4 / 4 — Největší překážka</div>
+    <div class="quiz-question">Co je #1 překážka Japonců ke skákání přes švihadlo?</div>
+    <div class="quiz-options">
+      <button class="quiz-btn" onclick="selectOption('qjp4',this,'Cena')">Cena</button>
+      <button class="quiz-btn" onclick="selectOption('qjp4',this,'Nezájem')">Nezájem</button>
+      <button class="quiz-btn" onclick="selectOption('qjp4',this,'Nedostatek místa')">Nedostatek místa</button>
+      <button class="quiz-btn" onclick="selectOption('qjp4',this,'Zdravotní důvody')">Zdravotní důvody</button>
+    </div>
+    <div class="waiting-msg" id="qjp4-wait"><div class="waiting-dot"></div>Čekejte na odhalení…</div>
+    <button class="fac-reveal-btn" id="qjp4-fac" onclick="revealAnswer('qjp4','Nedostatek místa')">Odhalit odpověď</button>
+    <div class="reveal-panel" id="qjp4-reveal">
+      <div class="reveal-number">#1 Místo</div>
+      <div class="reveal-text">Japonci žijí v malých bytech (průměr 38 m²) — #1 bariéra. Ale je toho víc:</div>
+      <div style="margin:16px 0;display:flex;flex-direction:column;gap:10px;">
+        <div class="jp-quote-card"><strong>📐 Nedostatek místa</strong> — <em>"V malém bytě v paneláku uvnitř skákat přes švihadlo nejde."</em></div>
+        <div class="jp-quote-card"><strong>🦵 Zdravotní obavy</strong> — obavy z kolen, kotníků. <em>"Obávám se, že šňůra narazí do těla a bude to bolet."</em></div>
+        <div class="jp-quote-card"><strong>😳 Stud na veřejnosti</strong> — 3× zmíněno. <em>"V oblasti, kde žiju, jsem nikoho skákat přes švihadlo neviděl."</em></div>
+        <div class="jp-quote-card"><strong>🔊 Hluk pro sousedy</strong> — japonské byty mají tenké stropy.</div>
+        <div class="jp-quote-card"><strong>👶 "Je to pro děti"</strong> — <em>"Mám silný dojem, že švihadlo = trapné, pro děti."</em></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JP EXTRA -->
+  <div class="unlockable" id="jp-extra">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--jp-accent);">93 %</div><div class="stat-desc">zkušenosti ze školy nebo neaktivní švihadlo doma</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--jp-accent);">77 %</div><div class="stat-desc">hodnotí design jako stylový</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--jp-accent);">43 %</div><div class="stat-desc">pozitivně reaguje na českou výrobu</div></div>
+    </div>
+    <div style="margin:40px 0;">
+      <p style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:20px;">Co by zvýšilo zájem o švihadlo — Japonsko</p>
+      <div class="bar-chart">
+        <div class="bar-row"><div class="bar-label">Appka zdarma</div><div class="bar-track"><div class="bar-fill bar-fill-jp" data-w="65%">65 % zájem</div></div></div>
+        <div class="bar-row"><div class="bar-label">Video tutoriály v JP</div><div class="bar-track"><div class="bar-fill bar-fill-jp" data-w="59%">59 % zájem</div></div></div>
+        <div class="bar-row"><div class="bar-label">14–30 denní výzvy</div><div class="bar-track"><div class="bar-fill bar-fill-jp" data-w="53%">53 % zájem</div></div></div>
+      </div>
+    </div>
+    <div class="insight-box-jp">
+      <h3>Klíčový insight — Japonsko</h3>
+      <p>Japonsko je náročné: cenová, jmenná i prostorová bariéra. Ale: <strong>design oslovuje (77 % stylový)</strong>, česká výroba rezonuje (43 %), cílová skupina je jasná (ženy 25–44). <strong>Appka jako vstupní bod</strong> snižuje cenovou bariéru a buduje komunitu před fyzickým prodejem.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<hr class="section-sep">
+<div class="final-section">
+  <p style="font-size:0.75rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px;">Výsledek</p>
+  <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:8px;">Výsledné skóre</h2>
+  <div class="final-score-display" id="final-score">—</div>
+  <div class="final-message" id="final-message">Proveďte všechny otázky a zjistěte výsledek.</div>
+  <div class="unlockable" id="final-actions">
+    <p style="font-size:0.75rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:24px;margin-top:48px;">3 klíčové akce pro marketing</p>
+    <div class="action-grid">
+      <div class="action-card">
+        <div class="action-market" style="color:var(--yellow);">🇨🇿 Česko</div>
+        <h4>Reaktivační kampaň</h4>
+        <p>37 % má švihadlo doma ale nepoužívá. Tito lidé nepotřebují koupit — potřebují důvod začít. „Reaktivace spících švihadel" může být levnější než akvizice.</p>
+      </div>
+      <div class="action-card">
+        <div class="action-market" style="color:var(--yellow);">🇸🇰 Slovensko</div>
+        <h4>Awareness kampaň</h4>
+        <p>Awareness je 2× nižší než v ČR při stejném potenciálu. Kdo zná Švihej, hodnotí ji 97 % Inspirativní. Čistý reach problém — ne produkt.</p>
+      </div>
+      <div class="action-card">
+        <div class="action-market" style="color:var(--jp-accent);">🇯🇵 Japonsko</div>
+        <h4>Appka jako vstupní bod</h4>
+        <p>Appka zdarma má nejvyšší zájem (65 %). Snižuje cenovou bariéru a buduje komunitu žen 25–44. Přejmenovat produkt, adresovat prostorové bariéry.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FACILITATOR_PIN = '2026';
+
+  // Flow map: 20 CZ + 3 SK + 4 JP = 27 total
+  const flowMap = {
+    qcz1: 'qcz2',  qcz2: 'qcz3',  qcz3: 'qcz4',  qcz4: 'qcz5',
+    qcz5: 'qcz6',  qcz6: 'qcz7',  qcz7: 'qcz8',  qcz8: 'qcz9',
+    qcz9: 'qcz10', qcz10: 'qcz11', qcz11: 'qcz12', qcz12: 'qcz13',
+    qcz13: 'qcz14', qcz14: 'qcz15', qcz15: 'qcz16', qcz16: 'qcz17',
+    qcz17: 'qcz18', qcz18: 'qcz19', qcz19: 'qcz20', qcz20: 'cz-extra',
+    qsk1: 'qsk2', qsk2: 'qsk3', qsk3: 'sk-extra',
+    qjp1: 'qjp2', qjp2: 'qjp3', qjp3: 'qjp4', qjp4: 'jp-extra'
+  }
+
+  // Unlockable blocks per terminal question
+  const unlockMap = {
+    'cz-extra': ['cz-extra'],
+    'sk-extra': ['sk-extra'],
+    'jp-extra': ['jp-extra', 'final-actions']
+  };
+
+  // Anketa data: correct answer label + real percentages per option label
+  const anketaData = {
+    qcz1:  { correct: '47 %',   pcts: { '28 %': 28, '38 %': 38, '47 %': 47, '61 %': 61 },
+    qcz2:  { correct: 'Běh / chůze', pcts: { 'Cyklistika': 28, 'Běh / chůze': 65, 'Plavání': 19, 'Posilování': 17 },
+    qcz3:  { correct: 'Zdraví', pcts: { 'Zhubnutí': 28, 'Zdraví': 30, 'Kondice': 23, 'Odreagování': 13 },
+    qcz4:  { correct: 'Muži: kondice / Ženy: zhubnutí', pcts: { 'Muži: zhubnutí / Ženy: kondice': 12, 'Muži: kondice / Ženy: zhubnutí': 45, 'Stejné u obou': 28, 'Muži: zdraví / Ženy: stres': 15 },
+    qcz5:  { correct: '75 %', pcts: { '45 %': 45, '60 %': 60, '75 %': 75, '88 %': 88 },
+    qcz6:  { correct: '37 %', pcts: { '15 %': 15, '25 %': 25, '37 %': 37, '50 %': 50 },
+    qcz7:  { correct: 'Forma cvičení', pcts: { 'Aktivita pro děti': 31, 'Forma cvičení': 72, 'Zábava': 31, 'Nezajímá mě': 10 },
+    qcz8:  { correct: 'Napůl napůl', pcts: { 'Převážně líbí': 32, 'Neutrální (37 % ani-ani)': 37, 'Převážně nelíbí': 32, 'Napůl napůl': 32 },
+    qcz9:  { correct: 'Nemám místo', pcts: { 'Zdravotní omezení': 25, 'Nemám místo': 31, 'Nemám čas': 19, 'Obava z hluku': 19 },
+    qcz10:  { correct: '55+ let', pcts: { '18–24 let': 13, '35–44 let': 18, '45–54 let': 36, '55+ let': 58 },
+    qcz11:  { correct: 'Kondice', pcts: { 'Zdraví': 40, 'Zhubnutí': 53, 'Kondice': 63, 'Odreagování': 25 },
+    qcz12:  { correct: 'Doma venku', pcts: { 'V parku': 13, 'V tělocvičně / fitku': 24, 'Doma venku': 63, 'Doma uvnitř': 61 },
+    qcz13:  { correct: '20 %', pcts: { '5 %': 5, '10 %': 10, '20 %': 20, '35 %': 35 },
+    qcz14:  { correct: 'Přátelská / Důvěryhodná', pcts: { 'Kvalitní': 67, 'Inspirativní': 77, 'Přátelská / Důvěryhodná': 79, 'Vtipná': 40 },
+    qcz15:  { correct: 'Stylový (56 %)', pcts: { 'Nevýrazný (5 %)': 5, 'Normální (39 %)': 39, 'Stylový (56 %)': 56, 'Nelíbí se mi': 5 },
+    qcz16:  { correct: 'Kvalita a odolnost', pcts: { 'Doporučení od influencera': 8, 'Design': 32, 'Doporučení od kamaráda': 28, 'Kvalita a odolnost': 68 },
+    qcz17:  { correct: 'Průměrná', pcts: { 'Velmi výhodná': 9, 'Průměrná': 40, 'Spíše drahá': 20, 'Velmi drahá': 4 },
+    qcz18:  { correct: 'Appka zdarma', pcts: { '14/30denní výzvy': 36, 'Workshop s trenérem': 42, 'Appka zdarma': 57, 'Návody v češtině': 43 },
+    qcz19:  { correct: 'Google', pcts: { 'Heureka': 12, 'Instagram / sociální sítě': 8, 'Google': 69, 'Decathlon.cz': 3 },
+    qcz20:  { correct: 'Sportisimo', pcts: { 'svihej.cz': 3, 'Alza.cz': 14, 'Decathlon': 47, 'Sportisimo': 39 },
+  }
+
+  window.isFacilitator = false;
+  window.isPreview = false;
+  let score = 0;
+  let answered = 0;
+  const total = 27;
+  const selections = {};
+
+  // PIN
+  document.getElementById('pin-input').addEventListener('keydown', e => { if(e.key==='Enter') checkPin(); });
+  function checkPin(){
+    if(document.getElementById('pin-input').value === FACILITATOR_PIN){ closePinOverlay(true); }
+    else {
+      const inp = document.getElementById('pin-input');
+      inp.classList.add('error'); inp.value=''; inp.placeholder='Špatný PIN…';
+      setTimeout(()=>{ inp.classList.remove('error'); inp.placeholder='••••'; },1200);
+    }
+  }
+  function closePinOverlay(asFac){
+    window.isFacilitator = asFac;
+    document.getElementById('pin-overlay').style.display='none';
+    if(asFac) document.getElementById('fac-badge').style.display='block';
+  }
+
+  function activatePreview(){
+    window.isPreview = true;
+    window.isFacilitator = true; // potřebujeme fac práva pro reveal
+    document.getElementById('pin-overlay').style.display='none';
+    document.getElementById('preview-badge').style.display='block';
+    // Odemknout všechny karty, odhalit všechny odpovědi, rozbalit vše
+    setTimeout(() => {
+      // 1. Odemknout všechny locked karty
+      document.querySelectorAll('.quiz-card.locked').forEach(c => c.classList.remove('locked'));
+      document.querySelectorAll('.unlockable').forEach(el => {
+        el.classList.add('show');
+        el.querySelectorAll('[data-w]').forEach(bar => {
+          const w = bar.getAttribute('data-w');
+          bar.style.width = w;
+        });
+      });
+      // 2. Odhalit všechny anketa odpovědi (CZ)
+      document.querySelectorAll('.anketa-options').forEach(opts => {
+        const card = opts.closest('.quiz-card');
+        if(!card) return;
+        const cardId = card.id;
+        const facBtn = document.getElementById(cardId+'-fac');
+        if(facBtn) {
+          // Extract correct answer from onclick
+          const m = facBtn.getAttribute('onclick').match(/anketaReveal\('[^']+','([^']+)'\)/);
+          if(m) anketaReveal(cardId, m[1]);
+        }
+      });
+      // 3. Odhalit všechny standard odpovědi (SK/JP)
+      document.querySelectorAll('.quiz-options').forEach(opts => {
+        const card = opts.closest('.quiz-card');
+        if(!card) return;
+        const cardId = card.id;
+        const facBtn = document.getElementById(cardId+'-fac');
+        if(facBtn) {
+          const m = facBtn.getAttribute('onclick').match(/revealAnswer\('[^']+','([^']+)'\)/);
+          if(m) revealAnswer(cardId, m[1]);
+        }
+      });
+      // 4. Skrýt všechny waiting messages, skrýt fac buttons
+      document.querySelectorAll('.waiting-msg').forEach(el => el.style.display='none');
+      document.querySelectorAll('.fac-reveal-btn').forEach(el => el.style.display='none');
+      // 5. Rozbalit všechny detail bloky
+      document.querySelectorAll('.detail-block').forEach(el => {
+        el.style.display = 'block';
+        el.querySelectorAll('[data-w]').forEach(bar => {
+          const w = bar.getAttribute('data-w');
+          bar.style.width = w;
+        });
+      });
+      // 6. Zobrazit všechny discussion boxy
+      document.querySelectorAll('.discussion-box').forEach(el => el.style.display='block');
+      // 7. Scroll na začátek
+      window.scrollTo({top:0, behavior:'smooth'});
+    }, 100);
+  }
+
+  // ── ANKETA: CZ questions — anyone can vote ──────────────────
+  function anketaVote(cardId, btn){
+    const card = document.getElementById(cardId);
+    if(card.classList.contains('revealed')) return;
+    // Toggle vote (only one at a time)
+    if(btn.classList.contains('voted')){
+      btn.classList.remove('voted');
+      selections[cardId] = null;
+    } else {
+      card.querySelectorAll('.anketa-btn').forEach(b => b.classList.remove('voted'));
+      btn.classList.add('voted');
+      selections[cardId] = btn.textContent.trim();
+    }
+    // Show/hide waiting + fac button
+    const wait = document.getElementById(cardId+'-wait');
+    const facBtn = document.getElementById(cardId+'-fac');
+    if(selections[cardId]){
+      if(window.isFacilitator){ if(facBtn) facBtn.classList.add('visible'); if(wait) wait.classList.remove('show'); }
+      else { if(wait) wait.classList.add('show'); if(facBtn) facBtn.classList.remove('visible'); }
+    } else {
+      if(wait) wait.classList.remove('show');
+      if(facBtn) facBtn.classList.remove('visible');
+    }
+  }
+
+  function anketaReveal(cardId, correct){
+    const card = document.getElementById(cardId);
+    if(card.classList.contains('revealed')) return;
+    card.classList.add('revealed');
+
+    const data = anketaData[cardId];
+    const chosen = selections[cardId];
+
+    // Transform buttons into result bars
+    card.querySelectorAll('.anketa-btn').forEach(btn => {
+      btn.disabled = true;
+      const label = btn.textContent.trim();
+      const pct = data.pcts[label] !== undefined ? data.pcts[label] : 0;
+      const isCorrect = (label === correct);
+      const wasVoted = (label === chosen);
+
+      btn.classList.remove('voted');
+      btn.classList.add('show-result');
+      if(isCorrect) btn.classList.add('top-answer');
+      if(wasVoted && !isCorrect) btn.classList.add('was-voted');
+
+      btn.innerHTML = `<div class="btn-bar" style="width:0%" data-w="${pct}%"></div><div class="btn-label"><span>${label}</span><span class="btn-pct">${pct} %</span></div>`;
+    });
+
+    // Animate bars
+    setTimeout(() => {
+      card.querySelectorAll('.btn-bar[data-w]').forEach(bar => {
+        bar.style.width = bar.getAttribute('data-w');
+      });
+    }, 150);
+
+    if(chosen === correct) score++;
+    answered++;
+
+    const wait = document.getElementById(cardId+'-wait');
+    const facBtn = document.getElementById(cardId+'-fac');
+    if(wait) wait.classList.remove('show');
+    if(facBtn) facBtn.style.display='none';
+
+    document.getElementById(cardId+'-reveal').classList.add('show');
+    const disc = document.getElementById(cardId+'-disc');
+    if(disc) disc.classList.add('show');
+    updateScoreDisplay();
+    appendNextButtons(cardId, card);
+  }
+
+  // ── STANDARD: SK/JP questions — one correct answer ──────────────────
+  function selectOption(cardId, btn, chosen){
+    const card = document.getElementById(cardId);
+    if(card.classList.contains('revealed')) return;
+    card.querySelectorAll('.quiz-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selections[cardId] = chosen;
+    const wait = document.getElementById(cardId+'-wait');
+    const facBtn = document.getElementById(cardId+'-fac');
+    if(window.isFacilitator){ if(facBtn) facBtn.classList.add('visible'); if(wait) wait.classList.remove('show'); }
+    else { if(wait) wait.classList.add('show'); if(facBtn) facBtn.classList.remove('visible'); }
+  }
+
+  function revealAnswer(cardId, correct){
+    const card = document.getElementById(cardId);
+    if(card.classList.contains('revealed')) return;
+    card.classList.add('revealed');
+    const chosen = selections[cardId] || null;
+    card.querySelectorAll('.quiz-btn').forEach(b => {
+      b.disabled = true;
+      b.classList.remove('selected');
+      const btnText = b.textContent.trim();
+      if(btnText === correct){ b.classList.add(chosen === correct ? 'correct' : 'highlight'); }
+      else if(btnText === chosen){ b.classList.add('wrong'); }
+    });
+    if(chosen === correct) score++;
+    answered++;
+    const wait = document.getElementById(cardId+'-wait');
+    const facBtn = document.getElementById(cardId+'-fac');
+    if(wait) wait.classList.remove('show');
+    if(facBtn) facBtn.style.display='none';
+    document.getElementById(cardId+'-reveal').classList.add('show');
+    const disc = document.getElementById(cardId+'-disc');
+    if(disc) disc.classList.add('show');
+    updateScoreDisplay();
+    appendNextButtons(cardId, card);
+  }
+
+  // ── SHARED: Next question / unlock results ──────────────────
+  function appendNextButtons(cardId, card){
+    const next = flowMap[cardId];
+    if(!next) return;
+
+    const row = document.createElement('div');
+    row.style.marginTop = '16px';
+
+    const isUnlockTarget = unlockMap[next];
+    const isSection = next === 'cz-extra' || next === 'sk-extra' || next === 'jp-extra';
+
+    if(isSection){
+      // This is last question of a section — show "unlock results" button
+      const rb = document.createElement('button');
+      rb.className = 'next-btn show';
+      if(next === 'jp-extra') rb.textContent = 'Zobrazit závěr →';
+      else rb.textContent = 'Zobrazit výsledky trhu →';
+      rb.onclick = () => {
+        const unlocks = unlockMap[next] || [next];
+        unlocks.forEach(uid => {
+          const el = document.getElementById(uid);
+          if(!el) return;
+          el.classList.add('show');
+          // Animate any bar fills inside
+          el.querySelectorAll('[data-w]').forEach(bar => {
+            const w = bar.getAttribute('data-w');
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = w; }, 400);
+          });
+        });
+        if(answered >= total){ updateFinalScore(); }
+        else if(next === 'jp-extra'){ updateFinalScore(); }
+        setTimeout(() => {
+          const target = document.getElementById(unlocks[0]);
+          if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        row.remove();
+      };
+      row.appendChild(rb);
+    } else {
+      // Regular next question
+      const nb = document.createElement('button');
+      nb.className = 'next-btn show';
+      nb.textContent = 'Další otázka →';
+      nb.onclick = () => {
+        const nc = document.getElementById(next);
+        if(nc){
+          nc.classList.remove('locked');
+          nc.style.animation = 'fadeIn 0.5s ease';
+          setTimeout(() => nc.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        }
+        row.remove();
+      };
+      row.appendChild(nb);
+    }
+    card.appendChild(row);
+  }
+
+  function toggleDetail(detailId, btn){
+    const el = document.getElementById(detailId);
+    if(el.classList.contains('show')){
+      el.classList.remove('show');
+      btn.textContent = '▾ Zobrazit více dat';
+    } else {
+      el.classList.add('show');
+      btn.textContent = '▴ Skrýt detaily';
+      // Animate mini bars
+      el.querySelectorAll('.mini-bar-fill[data-w]').forEach(bar => {
+        const w = bar.getAttribute('data-w');
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = w; }, 150);
+      });
+    }
+  }
+
+  function updateScoreDisplay(){
+    document.getElementById('score-display').textContent = score;
+    const pct = Math.round((answered / total) * 100);
+    document.getElementById('score-progress-fill').style.width = pct + '%';
+  }
+
+  function updateFinalScore(){
+    const pct = Math.round((score / total) * 100);
+    document.getElementById('final-score').textContent = score + ' / ' + total;
+    let msg = '';
+    if(pct >= 85) msg = 'Výborně — znáte naše trhy lépe než průměrný zákazník. Teď to přetavte do kampaní.';
+    else if(pct >= 60) msg = 'Dobrý základ. Pár věcí překvapilo — přesně proto tady ta data jsou.';
+    else if(pct >= 30) msg = 'Hodně nových informací. Dobré — to znamená, že data mají hodnotu.';
+    else msg = 'Trhy vás překvapily. To je ten správný první krok — teď víte, co nevíte.';
+    document.getElementById('final-message').textContent = msg;
+    document.getElementById('final-score').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Unlock results button for JP (manual trigger after jp-extra if answered all)
+  function unlockMarketResults(sectionId){
+    const el = document.getElementById(sectionId);
+    if(el) {
+      el.classList.add('show');
+      el.querySelectorAll('[data-w]').forEach(bar => {
+        const w = bar.getAttribute('data-w');
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = w; }, 400);
+      });
+    }
+  }
+
+  // Expose functions globally for onclick attributes
+  if(typeof checkPin !== "undefined") window.checkPin = checkPin;
+  if(typeof closePinOverlay !== "undefined") window.closePinOverlay = closePinOverlay;
+  if(typeof activatePreview !== "undefined") window.activatePreview = activatePreview;
+  if(typeof anketaVote !== "undefined") window.anketaVote = anketaVote;
+  if(typeof anketaReveal !== "undefined") window.anketaReveal = anketaReveal;
+  if(typeof selectOption !== "undefined") window.selectOption = selectOption;
+  if(typeof revealAnswer !== "undefined") window.revealAnswer = revealAnswer;
+  if(typeof toggleDetail !== "undefined") window.toggleDetail = toggleDetail;
+  if(typeof appendNextButtons !== "undefined") window.appendNextButtons = appendNextButtons;
+  if(typeof unlockMarketResults !== "undefined") window.unlockMarketResults = unlockMarketResults;
+  if(typeof updateScoreDisplay !== "undefined") window.updateScoreDisplay = updateScoreDisplay;
+  if(typeof updateFinalScore !== "undefined") window.updateFinalScore = updateFinalScore;
+</script>
+</body>
+</html>
