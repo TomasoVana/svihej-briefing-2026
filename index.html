@@ -1311,7 +1311,8 @@
 </div>
 
 <script>
-  const FACILITATOR_PIN = '2026';
+  window.FACILITATOR_PIN = '2026';
+  const FACILITATOR_PIN = window.FACILITATOR_PIN;
 
   // Flow map: 20 CZ + 3 SK + 4 JP = 27 total
   const flowMap = {
@@ -1333,26 +1334,26 @@
 
   // Anketa data: correct answer label + real percentages per option label
   const anketaData = {
-    qcz1:  { correct: '47 %',   pcts: { '28 %': 28, '38 %': 38, '47 %': 47, '61 %': 61 },
-    qcz2:  { correct: 'Běh / chůze', pcts: { 'Cyklistika': 28, 'Běh / chůze': 65, 'Plavání': 19, 'Posilování': 17 },
-    qcz3:  { correct: 'Zdraví', pcts: { 'Zhubnutí': 28, 'Zdraví': 30, 'Kondice': 23, 'Odreagování': 13 },
-    qcz4:  { correct: 'Muži: kondice / Ženy: zhubnutí', pcts: { 'Muži: zhubnutí / Ženy: kondice': 12, 'Muži: kondice / Ženy: zhubnutí': 45, 'Stejné u obou': 28, 'Muži: zdraví / Ženy: stres': 15 },
-    qcz5:  { correct: '75 %', pcts: { '45 %': 45, '60 %': 60, '75 %': 75, '88 %': 88 },
-    qcz6:  { correct: '37 %', pcts: { '15 %': 15, '25 %': 25, '37 %': 37, '50 %': 50 },
-    qcz7:  { correct: 'Forma cvičení', pcts: { 'Aktivita pro děti': 31, 'Forma cvičení': 72, 'Zábava': 31, 'Nezajímá mě': 10 },
-    qcz8:  { correct: 'Napůl napůl', pcts: { 'Převážně líbí': 32, 'Neutrální (37 % ani-ani)': 37, 'Převážně nelíbí': 32, 'Napůl napůl': 32 },
-    qcz9:  { correct: 'Nemám místo', pcts: { 'Zdravotní omezení': 25, 'Nemám místo': 31, 'Nemám čas': 19, 'Obava z hluku': 19 },
-    qcz10:  { correct: '55+ let', pcts: { '18–24 let': 13, '35–44 let': 18, '45–54 let': 36, '55+ let': 58 },
-    qcz11:  { correct: 'Kondice', pcts: { 'Zdraví': 40, 'Zhubnutí': 53, 'Kondice': 63, 'Odreagování': 25 },
-    qcz12:  { correct: 'Doma venku', pcts: { 'V parku': 13, 'V tělocvičně / fitku': 24, 'Doma venku': 63, 'Doma uvnitř': 61 },
-    qcz13:  { correct: '20 %', pcts: { '5 %': 5, '10 %': 10, '20 %': 20, '35 %': 35 },
-    qcz14:  { correct: 'Přátelská / Důvěryhodná', pcts: { 'Kvalitní': 67, 'Inspirativní': 77, 'Přátelská / Důvěryhodná': 79, 'Vtipná': 40 },
-    qcz15:  { correct: 'Stylový (56 %)', pcts: { 'Nevýrazný (5 %)': 5, 'Normální (39 %)': 39, 'Stylový (56 %)': 56, 'Nelíbí se mi': 5 },
-    qcz16:  { correct: 'Kvalita a odolnost', pcts: { 'Doporučení od influencera': 8, 'Design': 32, 'Doporučení od kamaráda': 28, 'Kvalita a odolnost': 68 },
-    qcz17:  { correct: 'Průměrná', pcts: { 'Velmi výhodná': 9, 'Průměrná': 40, 'Spíše drahá': 20, 'Velmi drahá': 4 },
-    qcz18:  { correct: 'Appka zdarma', pcts: { '14/30denní výzvy': 36, 'Workshop s trenérem': 42, 'Appka zdarma': 57, 'Návody v češtině': 43 },
-    qcz19:  { correct: 'Google', pcts: { 'Heureka': 12, 'Instagram / sociální sítě': 8, 'Google': 69, 'Decathlon.cz': 3 },
-    qcz20:  { correct: 'Sportisimo', pcts: { 'svihej.cz': 3, 'Alza.cz': 14, 'Decathlon': 47, 'Sportisimo': 39 },
+    qcz1:  { correct: '47 %',   pcts: { '28 %': 28, '38 %': 38, '47 %': 47, '61 %': 61 } },
+    qcz2:  { correct: 'Běh / chůze', pcts: { 'Cyklistika': 28, 'Běh / chůze': 65, 'Plavání': 19, 'Posilování': 17 } },
+    qcz3:  { correct: 'Zdraví', pcts: { 'Zhubnutí': 28, 'Zdraví': 30, 'Kondice': 23, 'Odreagování': 13 } },
+    qcz4:  { correct: 'Muži: kondice / Ženy: zhubnutí', pcts: { 'Muži: zhubnutí / Ženy: kondice': 12, 'Muži: kondice / Ženy: zhubnutí': 45, 'Stejné u obou': 28, 'Muži: zdraví / Ženy: stres': 15 } },
+    qcz5:  { correct: '75 %', pcts: { '45 %': 45, '60 %': 60, '75 %': 75, '88 %': 88 } },
+    qcz6:  { correct: '37 %', pcts: { '15 %': 15, '25 %': 25, '37 %': 37, '50 %': 50 } },
+    qcz7:  { correct: 'Forma cvičení', pcts: { 'Aktivita pro děti': 31, 'Forma cvičení': 72, 'Zábava': 31, 'Nezajímá mě': 10 } },
+    qcz8:  { correct: 'Napůl napůl', pcts: { 'Převážně líbí': 32, 'Neutrální (37 % ani-ani)': 37, 'Převážně nelíbí': 32, 'Napůl napůl': 32 } },
+    qcz9:  { correct: 'Nemám místo', pcts: { 'Zdravotní omezení': 25, 'Nemám místo': 31, 'Nemám čas': 19, 'Obava z hluku': 19 } },
+    qcz10:  { correct: '55+ let', pcts: { '18–24 let': 13, '35–44 let': 18, '45–54 let': 36, '55+ let': 58 } },
+    qcz11:  { correct: 'Kondice', pcts: { 'Zdraví': 40, 'Zhubnutí': 53, 'Kondice': 63, 'Odreagování': 25 } },
+    qcz12:  { correct: 'Doma venku', pcts: { 'V parku': 13, 'V tělocvičně / fitku': 24, 'Doma venku': 63, 'Doma uvnitř': 61 } },
+    qcz13:  { correct: '20 %', pcts: { '5 %': 5, '10 %': 10, '20 %': 20, '35 %': 35 } },
+    qcz14:  { correct: 'Přátelská / Důvěryhodná', pcts: { 'Kvalitní': 67, 'Inspirativní': 77, 'Přátelská / Důvěryhodná': 79, 'Vtipná': 40 } },
+    qcz15:  { correct: 'Stylový (56 %)', pcts: { 'Nevýrazný (5 %)': 5, 'Normální (39 %)': 39, 'Stylový (56 %)': 56, 'Nelíbí se mi': 5 } },
+    qcz16:  { correct: 'Kvalita a odolnost', pcts: { 'Doporučení od influencera': 8, 'Design': 32, 'Doporučení od kamaráda': 28, 'Kvalita a odolnost': 68 } },
+    qcz17:  { correct: 'Průměrná', pcts: { 'Velmi výhodná': 9, 'Průměrná': 40, 'Spíše drahá': 20, 'Velmi drahá': 4 } },
+    qcz18:  { correct: 'Appka zdarma', pcts: { '14/30denní výzvy': 36, 'Workshop s trenérem': 42, 'Appka zdarma': 57, 'Návody v češtině': 43 } },
+    qcz19:  { correct: 'Google', pcts: { 'Heureka': 12, 'Instagram / sociální sítě': 8, 'Google': 69, 'Decathlon.cz': 3 } },
+    qcz20:  { correct: 'Sportisimo', pcts: { 'svihej.cz': 3, 'Alza.cz': 14, 'Decathlon': 47, 'Sportisimo': 39 } },
   }
 
   window.isFacilitator = false;
